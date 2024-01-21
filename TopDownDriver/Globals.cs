@@ -15,10 +15,10 @@ namespace TopDownDriver
         {
             Bounds.AddRange(new[]
             {
-                new Hitbox(new Rectangle(-10, -10, 20, 720), 0f),
-                new Hitbox(new Rectangle(-10, 710, 1080, 20), 0f),
-                new Hitbox(new Rectangle(1070, -10, 20, 720), 0f),
-                new Hitbox(new Rectangle(-10, -10, 1080, 20), 0f)
+                new Hitbox(new Rectangle(-10, -10, 20, 730), 0f),
+                new Hitbox(new Rectangle(-10, 710, 1090, 20), 0f),
+                new Hitbox(new Rectangle(1070, -10, 20, 730), 0f),
+                new Hitbox(new Rectangle(-10, -10, 1090, 20), 0f)
             });
         }
     }
