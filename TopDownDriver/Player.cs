@@ -67,17 +67,31 @@ namespace TopDownDriver
 
 
             // Collision
+            intersecting = false;
             foreach (Hitbox boundary in Globals.Bounds)
-                if (boundary.Intersects(hitbox))
+                if (boundary.Intersects(hitbox, out Vector2 intersectionPoint))
                 {
-                    Velocity *= -1;
+                    intersecting = true;
+
+                    Line Side = hitbox.Sides.Where(x => x.A * intersectionPoint.X + x.B * intersectionPoint.Y == x.C).First();
+                    Vector2 v = Vector2.Normalize(Side.Centre - centre);
+                    // Vector2 intersectionNormal;
+                    if (Math.Max(v.X, v.Y) == v.X)
+                        intersectionNormal = new Vector2(v.X > 0 ? 1 : -1, 0);
+                    else
+                        intersectionNormal = new Vector2(0, v.Y > 0 ? 1 : -1);
                 }
         }
+        Vector2 intersectionNormal;
+        bool intersecting = false;
+        Line l => new Line(centre, centre + intersectionNormal * 100);
 
         public void Draw(SpriteBatch spriteBatch)
         {
             Rectangle DisplayRectangle = new Rectangle(Vector2.Round(new Vector2(centre.X, centre.Y)).ToPoint(), Size);
-            spriteBatch.Draw(ColorTexture, DisplayRectangle, null, Color.Red, rotation, new Vector2(0.5f), SpriteEffects.None, 0);
+            spriteBatch.Draw(ColorTexture, DisplayRectangle, null, intersecting ? Color.Green : Color.Red, rotation, new Vector2(0.5f), SpriteEffects.None, 0);
+            
+            if (intersecting) l.Draw(spriteBatch, Color.Goldenrod);
         }
 
         Vector2 AngleToVector2(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));

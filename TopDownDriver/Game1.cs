@@ -62,6 +62,10 @@ namespace TopDownDriver
 
             player.Draw(_spriteBatch);
 
+            foreach (Hitbox hitbox in Globals.Bounds)
+                foreach (Line side in hitbox.Sides)
+                    side.Draw(_spriteBatch, Color.Goldenrod);
+
             _spriteBatch.End();
             base.Draw(gameTime);
         }

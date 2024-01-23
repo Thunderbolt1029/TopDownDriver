@@ -73,15 +73,19 @@ namespace TopDownDriver
 
         static bool QuickIntersect(Hitbox hitbox1, Hitbox hitbox2) => hitbox1.axisAlignedBoundingBox.Intersects(hitbox2.axisAlignedBoundingBox);
 
-        public bool Intersects(Hitbox hitbox2) => Intersects(this, hitbox2);
-        public static bool Intersects(Hitbox hitbox1, Hitbox hitbox2)
+        public bool Intersects(Hitbox hitbox2, out Vector2 intersectionPoint) => Intersects(this, hitbox2, out intersectionPoint);
+        public static bool Intersects(Hitbox hitbox1, Hitbox hitbox2, out Vector2 intersectionPoint)
         {
+            intersectionPoint = Vector2.Zero;
             if (!QuickIntersect(hitbox1, hitbox2))
                 return false;
 
-            // Add in something for collisions that involves the line normals
+            foreach (Line line1 in hitbox1.Sides)
+                foreach (var line2 in hitbox2.Sides)
+                    if (Line.Intersects(line1, line2, out intersectionPoint))
+                        return true;
 
-            return true;
+            return false;
         }
     }
 }
