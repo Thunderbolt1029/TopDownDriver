@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Diagnostics;
 
 namespace TopDownDriver
 {
@@ -28,7 +29,7 @@ namespace TopDownDriver
             ColorTexture = new Texture2D(GraphicsDevice, 1, 1);
             ColorTexture.SetData(new[] { Color.White });
 
-            player = new Player(GraphicsDevice, new Vector2(100), 0f);
+            player = new Player(GraphicsDevice, new Vector2(100), 0f, PlayerIndex.One);
 
             Globals.Initialize();
 
@@ -44,7 +45,7 @@ namespace TopDownDriver
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
             player.Update(gameTime);

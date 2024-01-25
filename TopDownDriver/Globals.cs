@@ -9,6 +9,8 @@ namespace TopDownDriver
 {
     internal static  class Globals
     {
+        public static bool UsingController = true;
+
         public static List<Hitbox> Bounds = new List<Hitbox>();
         
         public static void Initialize()
