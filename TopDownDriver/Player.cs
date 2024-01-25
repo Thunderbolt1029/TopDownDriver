@@ -19,7 +19,7 @@ namespace TopDownDriver
         public const float FrictionStrength = 0.05f;
         public const float TractionStrength = 1.7f;
         public const float BoundaryPushbackStrength = 10f;
-        public const float BounceStrength = 0.2f;
+        public const float BounceStrength = 0.4f;
         public const float VelocityLowerBound = 0.1f;
 
         Texture2D ColorTexture;
@@ -30,7 +30,7 @@ namespace TopDownDriver
         Vector2 Velocity;
         public readonly PlayerIndex index;
 
-        bool MovingForwards => Vector2.Dot(AngleToVector2(rotation), Velocity) > 0;
+        bool MovingForwards => Vector2.Dot(AngleToVector(rotation), Velocity) > 0;
         Hitbox hitbox => new Hitbox(new Rectangle(Vector2.Round(new Vector2(centre.X - Size.X / 2, centre.Y - Size.Y / 2)).ToPoint(), Size), rotation);
 
         public Player(GraphicsDevice graphicsDevice, Vector2 position, float rotation, PlayerIndex index)
@@ -82,12 +82,12 @@ namespace TopDownDriver
             // Apply drive force
             float drive = power * PowerStrength;
             rotation += steering * SteeringStrength * delta;
-            Velocity += AngleToVector2(rotation) * drive * delta;
+            Velocity += AngleToVector(rotation) * drive * delta;
 
 
             // Resistive forces
             Velocity *= 1 - FrictionStrength;
-            Velocity = Vector2.Lerp(Velocity.Length() > 0 ? Vector2.Normalize(Velocity) : Vector2.Zero, AngleToVector2(rotation) * (MovingForwards ? 1 : -1), TractionStrength * delta) * Velocity.Length();
+            Velocity = Vector2.Lerp(Velocity.Length() > 0 ? Vector2.Normalize(Velocity) : Vector2.Zero, AngleToVector(rotation) * (MovingForwards ? 1 : -1), TractionStrength * delta) * Velocity.Length();
             if (Velocity != Vector2.Zero && Velocity.Length() < VelocityLowerBound) 
                 Velocity = Vector2.Zero;
 
@@ -102,8 +102,9 @@ namespace TopDownDriver
 
                     if (Vector2.Dot(Velocity, normal) < 0)
                     {
-                        Velocity -= Vector2.Dot(Velocity, normal) * normal;
+                        Velocity -= Vector2.Dot(Velocity, normal) * normal * (1 + BounceStrength);
                         Velocity += normal * BoundaryPushbackStrength;
+                        float fullReflectionAngle = 2 * VectorToAngle(normal) - rotation + MathHelper.Pi;
                     }
                 }
 
@@ -118,6 +119,7 @@ namespace TopDownDriver
             spriteBatch.Draw(ColorTexture, DisplayRectangle, null, Color.Red, rotation, new Vector2(0.5f), SpriteEffects.None, 0);
         }
 
-        Vector2 AngleToVector2(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));
+        Vector2 AngleToVector(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));
+        float VectorToAngle(Vector2 vector) => (float)Math.Atan2(vector.Y, vector.X);
     }
 }
