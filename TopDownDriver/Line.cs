@@ -11,13 +11,20 @@ namespace TopDownDriver
 {
     internal struct Line
     {
+        const float PointOnLineError = 1f;
+
+        public static Line Empty => new Line(Vector2.Zero, Vector2.Zero);
+
         public Vector2 Start, End;
         public Vector2 Centre => Start + (End - Start) / 2;
 
         // ax + by = c
-        internal float A => End.Y - Start.Y;
-        internal float B => Start.X - End.X;
-        internal float C => A * Start.X + B * End.Y;
+        public float A => End.Y - Start.Y;
+        public float B => Start.X - End.X;
+        public float C => - End.X * Start.Y + Start.X * End.Y;
+
+        public float m => - A / B;
+        public float mPerp => B / A;
 
         public Line(Vector2 Start, Vector2 End)
         {
@@ -85,31 +92,63 @@ namespace TopDownDriver
             }
         }
 
+/*
+char get_line_intersection(float p0_x, float p0_y, float p1_x, float p1_y, 
+    float p2_x, float p2_y, float p3_x, float p3_y, float *i_x, float *i_y)
+{
+    float s1_x, s1_y, s2_x, s2_y;
+    s1_x = p1_x - p0_x;     s1_y = p1_y - p0_y;
+    s2_x = p3_x - p2_x;     s2_y = p3_y - p2_y;
+
+    float s, t;
+    s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
+    t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
+
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+    {
+        // Collision detected
+        if (i_x != NULL)
+            *i_x = p0_x + (t * s1_x);
+        if (i_y != NULL)
+            *i_y = p0_y + (t * s1_y);
+        return 1;
+    }
+
+    return 0; // No collision
+}
+*/
         public bool Intersects(Line line2, out Vector2 intersectionPoint) => Intersects(this, line2, out intersectionPoint);
 
         public static bool Intersects(Line line1, Line line2, out Vector2 intersectionPoint)
         {
             intersectionPoint = Vector2.Zero;
 
-            float w = line1.A * line2.B - line2.A * line1.B;
+            float s1_x, s1_y, s2_x, s2_y;
+            s1_x = line1.End.X - line1.Start.X; s1_y = line1.End.Y - line1.Start.Y;
+            s2_x = line2.End.X - line2.Start.X; s2_y = line2.End.Y - line2.Start.Y;
 
-            if (w == 0)
-                return false;
+            float s, t;
+            s = (-s1_y * (line1.Start.X - line2.Start.X) + s1_x * (line1.Start.Y - line2.Start.Y)) / (-s2_x * s1_y + s1_x * s2_y);
+            t = (s2_x * (line1.Start.Y - line2.Start.Y) - s2_y * (line1.Start.X - line2.Start.X)) / (-s2_x * s1_y + s1_x * s2_y);
 
-            float u = line2.B * line1.C - line1.B * line2.C;
-            float v = line1.A * line2.C - line2.A * line1.C;
-
-            Vector2 iIntersection = new Vector2(u / w, v / w);
-
-            bool OnLine1 = line1.A * iIntersection.X + line1.B * iIntersection.Y == line1.C;
-            bool OnLine2 = line2.A * iIntersection.X + line2.B * iIntersection.Y == line2.C;
-
-            if (OnLine1 && OnLine2)
+            if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
             {
-                intersectionPoint = iIntersection;
+                // Collision detected
+                intersectionPoint.X = line1.Start.X + (t * s1_x);
+                intersectionPoint.Y = line1.Start.Y + (t * s1_y);
                 return true;
             }
-            return false;
+
+            return false; // No collision
         }
+
+        public bool PointOnLine(Vector2 point)
+        {
+            float Distance = (float)(Math.Abs(A * point.X + B * point.Y - C) / Math.Sqrt(A * A + B * B));
+            return Distance <= PointOnLineError;
+        }
+
+        public static bool operator ==(Line line1, Line line2) => line1.Start == line2.Start && line1.End == line2.End;
+        public static bool operator !=(Line line1, Line line2) => line1.Start != line2.Start || line1.End != line2.End;
     }
 }

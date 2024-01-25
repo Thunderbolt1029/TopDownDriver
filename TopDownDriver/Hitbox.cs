@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Media;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,6 +13,8 @@ namespace TopDownDriver
     {
         public Rectangle nonRotated;
         public float rotation;
+
+        public Vector2 Centre => nonRotated.Center.ToVector2();
 
         public Hitbox(Rectangle nonRotated, float rotation)
         {
@@ -72,20 +75,41 @@ namespace TopDownDriver
         }
 
         static bool QuickIntersect(Hitbox hitbox1, Hitbox hitbox2) => hitbox1.axisAlignedBoundingBox.Intersects(hitbox2.axisAlignedBoundingBox);
-
-        public bool Intersects(Hitbox hitbox2, out Vector2 intersectionPoint) => Intersects(this, hitbox2, out intersectionPoint);
-        public static bool Intersects(Hitbox hitbox1, Hitbox hitbox2, out Vector2 intersectionPoint)
+        public bool Intersects(Hitbox hitbox2, out List<Vector2> intersectionPoints) => Intersects(this, hitbox2, out intersectionPoints);
+        public static bool Intersects(Hitbox hitbox1, Hitbox hitbox2, out List<Vector2> intersectionPoints)
         {
-            intersectionPoint = Vector2.Zero;
+            intersectionPoints = new List<Vector2>();
             if (!QuickIntersect(hitbox1, hitbox2))
                 return false;
 
             foreach (Line line1 in hitbox1.Sides)
                 foreach (var line2 in hitbox2.Sides)
-                    if (Line.Intersects(line1, line2, out intersectionPoint))
-                        return true;
+                    if (Line.Intersects(line1, line2, out Vector2 intersectionPoint))
+                        intersectionPoints.Add(intersectionPoint);
 
-            return false;
+            return intersectionPoints.Count != 0;
+        }
+
+        public Vector2 FindNormal(Vector2 pointOnRectangle) => FindNormal(this, pointOnRectangle);
+        public static Vector2 FindNormal(Hitbox hitbox, Vector2 pointOnRectangle) 
+        {
+            Line line = Line.Empty;
+
+            foreach (Line l in hitbox.Sides)
+                if (l.PointOnLine(pointOnRectangle))
+                    line = l;
+
+            try
+            {
+                if (line == Line.Empty)
+                    throw new ArgumentException("Argument 'pointOnRectangle' not on the rectangle");
+            }
+            catch
+            {
+                return Vector2.Zero;
+            }
+            
+            return Vector2.Normalize(line.Centre - hitbox.Centre);
         }
     }
 }

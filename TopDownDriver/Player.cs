@@ -13,9 +13,11 @@ namespace TopDownDriver
     {
         public const float SteeringStrength = 6f;
         public const float PowerStrength = 1200f;
+        public const float ReversePowerStrength = 0.2f;
         public const float FrictionStrength = 0.05f;
         public const float TractionStrength = 1.5f;
-        public const float BounceStrength = 0.8f;
+        public const float BoundaryPushbackStrength = 10f;
+        public const float VelocityLowerBound = 0.1f;
 
         Texture2D ColorTexture;
         Point Size = new Point(20, 10);
@@ -43,7 +45,7 @@ namespace TopDownDriver
             // Drive
             float power = 0f;
             power += keyboardState.IsKeyDown(Keys.Up) ? 1 : 0;
-            power += keyboardState.IsKeyDown(Keys.Down) ? -1 : 0;
+            power += keyboardState.IsKeyDown(Keys.Down) ? -ReversePowerStrength : 0;
 
             float drive = power * PowerStrength;
 
@@ -55,43 +57,38 @@ namespace TopDownDriver
 
             rotation += steering * SteeringStrength * delta;
 
+            // Apply drive force
+            Velocity += AngleToVector2(rotation) * drive * delta;
+
 
             // Resistive forces
             Velocity *= 1 - FrictionStrength;
-            Velocity = Vector2.Lerp(Velocity.Length() > 0 ? Vector2.Normalize(Velocity) : Vector2.Zero, AngleToVector2(rotation), TractionStrength * delta) * Velocity.Length();
-
-
-            // Apply acceleration
-            Velocity += AngleToVector2(rotation) * drive * delta;
-            centre += Velocity * delta;
+            Velocity = Vector2.Lerp(Velocity.Length() > 0 ? Vector2.Normalize(Velocity) : Vector2.Zero, AngleToVector2(rotation) * (Vector2.Dot(AngleToVector2(rotation), Velocity) < 0 ? -1 : 1), TractionStrength * delta) * Velocity.Length();
+            if (Velocity != Vector2.Zero && Velocity.Length() < VelocityLowerBound) 
+                Velocity = Vector2.Zero;
 
 
             // Collision
-            intersecting = false;
+            Vector2 CollisionForce = Vector2.Zero;
             foreach (Hitbox boundary in Globals.Bounds)
-                if (boundary.Intersects(hitbox, out Vector2 intersectionPoint))
+                if (boundary.Intersects(hitbox, out List<Vector2> intersectionPoints))
                 {
-                    intersecting = true;
+                    Vector2 Centre = new Vector2(intersectionPoints.Average(x => x.X), intersectionPoints.Average(x => x.Y));
+                    Vector2 normal = boundary.FindNormal(Centre);
 
-                    Line Side = hitbox.Sides.Where(x => x.A * intersectionPoint.X + x.B * intersectionPoint.Y == x.C).First();
-                    Vector2 v = Vector2.Normalize(Side.Centre - centre);
-                    // Vector2 intersectionNormal;
-                    if (Math.Max(v.X, v.Y) == v.X)
-                        intersectionNormal = new Vector2(v.X > 0 ? 1 : -1, 0);
-                    else
-                        intersectionNormal = new Vector2(0, v.Y > 0 ? 1 : -1);
+                    if (Vector2.Dot(Velocity, normal) < 0)
+                        Velocity -= Vector2.Dot(Velocity, normal) * normal - normal * BoundaryPushbackStrength;
                 }
+
+
+            // Apply acceleration
+            centre += Velocity * delta;
         }
-        Vector2 intersectionNormal;
-        bool intersecting = false;
-        Line l => new Line(centre, centre + intersectionNormal * 100);
 
         public void Draw(SpriteBatch spriteBatch)
         {
             Rectangle DisplayRectangle = new Rectangle(Vector2.Round(new Vector2(centre.X, centre.Y)).ToPoint(), Size);
-            spriteBatch.Draw(ColorTexture, DisplayRectangle, null, intersecting ? Color.Green : Color.Red, rotation, new Vector2(0.5f), SpriteEffects.None, 0);
-            
-            if (intersecting) l.Draw(spriteBatch, Color.Goldenrod);
+            spriteBatch.Draw(ColorTexture, DisplayRectangle, null, Color.Red, rotation, new Vector2(0.5f), SpriteEffects.None, 0);
         }
 
         Vector2 AngleToVector2(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));
