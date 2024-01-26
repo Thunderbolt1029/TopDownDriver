@@ -18,14 +18,19 @@ namespace TopDownDriver
         public const float BrakeStrength = 0.4f;
         public const float FrictionStrength = 0.05f;
         public const float TractionStrength = 1.7f;
-        public const float BoundaryPushbackStrength = 10f;
-        public const float BounceStrength = 0.4f;
+        public const float BoundaryPushbackStrength = 6f;
+        public const float BounceStrength = 0.0f;
         public const float VelocityLowerBound = 0.1f;
 
         Texture2D ColorTexture;
+        readonly Color[] PlayerIndexColors = new Color[] { Color.Red, Color.Blue, Color.Green, Color.Yellow };
+        public static Texture2D[] PlayerIndexTextures;
+        Color color => PlayerIndexColors[(int)index];
+        Texture2D texture => PlayerIndexTextures[(int)index];
+        
         Point Size = new Point(20, 10);
 
-        Vector2 centre;
+        public Vector2 centre { get; private set; }
         float rotation;
         Vector2 Velocity;
         public readonly PlayerIndex index;
@@ -116,10 +121,10 @@ namespace TopDownDriver
         public void Draw(SpriteBatch spriteBatch)
         {
             Rectangle DisplayRectangle = new Rectangle(Vector2.Round(new Vector2(centre.X, centre.Y)).ToPoint(), Size);
-            spriteBatch.Draw(ColorTexture, DisplayRectangle, null, Color.Red, rotation, new Vector2(0.5f), SpriteEffects.None, 0);
+            spriteBatch.Draw(texture, DisplayRectangle, null, color, rotation, new Vector2(texture.Width, texture.Height) / 2, SpriteEffects.None, 0);
         }
 
-        Vector2 AngleToVector(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));
-        float VectorToAngle(Vector2 vector) => (float)Math.Atan2(vector.Y, vector.X);
+        static Vector2 AngleToVector(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));
+        static float VectorToAngle(Vector2 vector) => (float)Math.Atan2(vector.Y, vector.X);
     }
 }

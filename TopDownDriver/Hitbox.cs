@@ -101,7 +101,7 @@ namespace TopDownDriver
 
             try
             {
-                if (line == Line.Empty)
+                if (line.Equals(Line.Empty))
                     throw new ArgumentException("Argument 'pointOnRectangle' not on the rectangle");
             }
             catch

@@ -147,8 +147,5 @@ char get_line_intersection(float p0_x, float p0_y, float p1_x, float p1_y,
             float Distance = (float)(Math.Abs(A * point.X + B * point.Y - C) / Math.Sqrt(A * A + B * B));
             return Distance <= PointOnLineError;
         }
-
-        public static bool operator ==(Line line1, Line line2) => line1.Start == line2.Start && line1.End == line2.End;
-        public static bool operator !=(Line line1, Line line2) => line1.Start != line2.Start || line1.End != line2.End;
     }
 }
