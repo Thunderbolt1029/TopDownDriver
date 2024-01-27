@@ -11,18 +11,18 @@ namespace TopDownDriver
 {
     internal struct Hitbox
     {
-        public Rectangle nonRotated;
-        public float rotation;
+        public Vector2 Centre;
+        public Vector2 Size;
+        public float Rotation;
 
-        public Vector2 Centre => nonRotated.Center.ToVector2();
-
-        public Hitbox(Rectangle nonRotated, float rotation)
+        public Hitbox(Vector2 centre, Vector2 size, float rotation)
         {
-            this.nonRotated = nonRotated;
-            this.rotation = rotation;
+            Centre = centre;
+            Size = size;
+            Rotation = rotation;
         }
 
-        public Rectangle DisplayRectangle => new Rectangle(Vector2.Round(new Vector2(nonRotated.X + nonRotated.Size.X / 2, nonRotated.Y + nonRotated.Size.Y / 2)).ToPoint(), nonRotated.Size);
+        public Rectangle DisplayRectangle => new Rectangle(Centre.ToPoint(), Size.ToPoint());
         public Rectangle AxisAlignedBoundingBox
         {
             get
@@ -47,13 +47,13 @@ namespace TopDownDriver
                 Vector2[] corners = new Vector2[4];
                 Vector2[] transformedCorners = new Vector2[4];
 
-                corners[0] = new Vector2(-nonRotated.Size.X, -nonRotated.Size.Y) / 2;
-                corners[1] = new Vector2(-nonRotated.Size.X, nonRotated.Size.Y) / 2;
-                corners[2] = new Vector2(nonRotated.Size.X, nonRotated.Size.Y) / 2;
-                corners[3] = new Vector2(nonRotated.Size.X, -nonRotated.Size.Y) / 2;
+                corners[0] = new Vector2(-Size.X, -Size.Y) / 2;
+                corners[1] = new Vector2(-Size.X, Size.Y) / 2;
+                corners[2] = new Vector2(Size.X, Size.Y) / 2;
+                corners[3] = new Vector2(Size.X, -Size.Y) / 2;
 
                 for (int i = 0; i < 4; i++)
-                    transformedCorners[i] = Vector2.Transform(corners[i], Matrix.CreateRotationZ(rotation) * Matrix.CreateTranslation(new Vector3(nonRotated.Location.ToVector2() + nonRotated.Size.ToVector2() / 2, 0)));
+                    transformedCorners[i] = Vector2.Transform(corners[i], Matrix.CreateRotationZ(Rotation) * Matrix.CreateTranslation(new Vector3(Centre, 0)));
                 
                 return transformedCorners;
             }
