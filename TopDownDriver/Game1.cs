@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -20,6 +21,20 @@ namespace TopDownDriver
 
         Player[] players = new Player[4];
 
+        Keys[] KeyboardHeldButtons = System.Array.Empty<Keys>(), KeyboardPreviousHeldButtons = System.Array.Empty<Keys>();
+        Keys[] KeyboardClickedButtons => KeyboardHeldButtons.Except(KeyboardPreviousHeldButtons).ToArray();
+        Buttons[][] ControllerHeldButtons = new Buttons[4][], ControllerPreviousHeldButtons = new Buttons[4][];
+        Buttons[][] ControllerClickedButtons
+        {
+            get
+            {
+                Buttons[][] clicked = new Buttons[4][];
+                for (int i = 0; i < 4; i++)
+                    clicked[i] = ControllerHeldButtons[i].Except(ControllerPreviousHeldButtons[i]).ToArray();
+                return clicked;
+            }
+        }
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -35,10 +50,15 @@ namespace TopDownDriver
             ColorTexture = new Texture2D(GraphicsDevice, 1, 1);
             ColorTexture.SetData(new[] { Color.White });
 
-            camera = new Camera();
-            camera.Zoom = 2f;
+            camera = new Camera
+            {
+                Zoom = 1.5f
+            };
 
             players[0] = new Player(GraphicsDevice, new Vector2(100), 0f, PlayerIndex.One);
+
+            for (int i = 0; i < 4; i++)
+                ControllerHeldButtons[i] = System.Array.Empty<Buttons>();
 
             Globals.Initialize();
 
@@ -59,8 +79,8 @@ namespace TopDownDriver
 
         protected override void Update(GameTime gameTime)
         {
-            Globals.UpdateInputs();
-            if (Globals.KeyboardHeldButtons.Contains(Keys.Escape))
+            UpdateInputs();
+            if (KeyboardHeldButtons.Contains(Keys.Escape))
                 Exit();
 
             // Options
@@ -69,31 +89,30 @@ namespace TopDownDriver
             {
                 if (GamePad.GetState(i).IsConnected)
                 {
-                    if (players[i] == null && Globals.ControllerClickedButtons[i].Contains(Buttons.Start))
+                    if (players[i] == null && ControllerClickedButtons[i].Contains(Buttons.Start))
                         players[i] = new Player(GraphicsDevice, new Vector2(100), 0f, (PlayerIndex)i);
-                    else if (Globals.ControllerClickedButtons[i].Contains(Buttons.Back))
+                    else if (ControllerClickedButtons[i].Contains(Buttons.Back))
                         players[i] = null;
                 }
                 else if (players[i] != null)
                     players[i] = null;
             }
 
-            if (camera.Zoom > 1f && (Globals.ControllerClickedButtons[0].Contains(Buttons.LeftShoulder) || Globals.KeyboardClickedButtons.Contains(Keys.OemMinus)))
+            if (camera.Zoom > 0.5f && (ControllerClickedButtons[0].Contains(Buttons.LeftShoulder) || KeyboardClickedButtons.Contains(Keys.OemMinus)))
                 camera.Zoom -= 0.5f;
-            if (camera.Zoom < 3f && (Globals.ControllerClickedButtons[0].Contains(Buttons.RightShoulder) || Globals.KeyboardClickedButtons.Contains(Keys.OemPlus)))
+            if (camera.Zoom < 2.5f && (ControllerClickedButtons[0].Contains(Buttons.RightShoulder) || KeyboardClickedButtons.Contains(Keys.OemPlus)))
                 camera.Zoom += 0.5f;
-            if (Globals.ControllerClickedButtons[0].Contains(Buttons.Y) || Globals.KeyboardClickedButtons.Contains(Keys.OemOpenBrackets))
-                camera.Zoom = 2f;
+            if (ControllerClickedButtons[0].Contains(Buttons.Y) || KeyboardClickedButtons.Contains(Keys.OemOpenBrackets))
+                camera.Zoom = 1.5f;
 
-            if (!Globals.UsingController && Globals.ControllerClickedButtons[0].Length != 0) Globals.UsingController = true;
-            if (Globals.UsingController && Globals.KeyboardClickedButtons.Length != 0) Globals.UsingController = false;
+            //if (!Globals.UsingController && ControllerClickedButtons[0].Length != 0) Globals.UsingController = true;
+            //if (Globals.UsingController && KeyboardClickedButtons.Length != 0) Globals.UsingController = false;
 
 
 
             //  Update players 
             foreach (Player player in players)
-                if (player != null)
-                    player.Update(gameTime);
+                player?.Update(gameTime);
 
 
             // Update camera
@@ -102,7 +121,7 @@ namespace TopDownDriver
             for (int i = 0; i < 4; i++)
                 if (players[i] != null)
                 {
-                    AveragePlayerPosition += players[i].centre;
+                    AveragePlayerPosition += players[i].Centre;
                     ActivePlayerCount++;
                 }
             if (ActivePlayerCount != 0)
@@ -117,7 +136,7 @@ namespace TopDownDriver
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // Draw from camera perspective
-            _spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, null, null, null, null, camera.get_transformation(GraphicsDevice));
+            _spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, null, null, null, null, camera.GetTransformation(GraphicsDevice));
 
             for (int x = BackgroundOutRectangle.Left; x < BackgroundOutRectangle.Right; x += Background.Width)
                 for (int y = BackgroundOutRectangle.Top; y < BackgroundOutRectangle.Bottom; y += Background.Height)
@@ -127,8 +146,7 @@ namespace TopDownDriver
                 _spriteBatch.Draw(ColorTexture, hitbox.DisplayRectangle, null, Color.Black, hitbox.rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
 
             foreach (Player player in players)
-                if (player != null)
-                    player.Draw(_spriteBatch);
+                player?.Draw(_spriteBatch);
 
             _spriteBatch.End();
 
@@ -138,6 +156,56 @@ namespace TopDownDriver
             // TODO UI
 
             _spriteBatch.End();
+        }
+
+        void UpdateInputs()
+        {
+            KeyboardPreviousHeldButtons = KeyboardHeldButtons;
+            KeyboardHeldButtons = Keyboard.GetState().GetPressedKeys();
+
+            ControllerPreviousHeldButtons = (Buttons[][])ControllerHeldButtons.Clone();
+            for (int i = 0; i < 4; i++)
+                ControllerHeldButtons[i] = System.Array.Empty<Buttons>();
+            for (PlayerIndex i = PlayerIndex.One; i <= PlayerIndex.Four; i++)
+            {
+                List<Buttons> buttons = new List<Buttons>();
+                GamePadState state = GamePad.GetState(i);
+                if (!state.IsConnected) continue;
+
+                if (state.Buttons.A == ButtonState.Pressed)
+                    buttons.Add(Buttons.A);
+                if (state.Buttons.B == ButtonState.Pressed)
+                    buttons.Add(Buttons.B);
+                if (state.Buttons.Back == ButtonState.Pressed)
+                    buttons.Add(Buttons.Back);
+                if (state.Buttons.BigButton == ButtonState.Pressed)
+                    buttons.Add(Buttons.BigButton);
+                if (state.Buttons.LeftShoulder == ButtonState.Pressed)
+                    buttons.Add(Buttons.LeftShoulder);
+                if (state.Buttons.LeftStick == ButtonState.Pressed)
+                    buttons.Add(Buttons.LeftStick);
+                if (state.Buttons.RightShoulder == ButtonState.Pressed)
+                    buttons.Add(Buttons.RightShoulder);
+                if (state.Buttons.RightStick == ButtonState.Pressed)
+                    buttons.Add(Buttons.RightStick);
+                if (state.Buttons.Start == ButtonState.Pressed)
+                    buttons.Add(Buttons.Start);
+                if (state.Buttons.X == ButtonState.Pressed)
+                    buttons.Add(Buttons.X);
+                if (state.Buttons.Y == ButtonState.Pressed)
+                    buttons.Add(Buttons.Y);
+
+                if (state.DPad.Up == ButtonState.Pressed)
+                    buttons.Add(Buttons.DPadUp);
+                if (state.DPad.Down == ButtonState.Pressed)
+                    buttons.Add(Buttons.DPadDown);
+                if (state.DPad.Left == ButtonState.Pressed)
+                    buttons.Add(Buttons.DPadLeft);
+                if (state.DPad.Right == ButtonState.Pressed)
+                    buttons.Add(Buttons.DPadRight);
+
+                ControllerHeldButtons[(int)i] = buttons.ToArray();
+            }
         }
     }
 }

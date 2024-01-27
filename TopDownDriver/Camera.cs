@@ -44,7 +44,7 @@ namespace TopDownDriver
             _pos = Vector2.Zero;
         }
 
-        public Matrix get_transformation(GraphicsDevice graphicsDevice)
+        public Matrix GetTransformation(GraphicsDevice graphicsDevice)
         {
             _transform =       // Thanks to o KB o for this solution
                 Matrix.CreateTranslation(new Vector3(-_pos.X, -_pos.Y, 0)) *

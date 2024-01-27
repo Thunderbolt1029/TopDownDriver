@@ -23,7 +23,7 @@ namespace TopDownDriver
         }
 
         public Rectangle DisplayRectangle => new Rectangle(Vector2.Round(new Vector2(nonRotated.X + nonRotated.Size.X / 2, nonRotated.Y + nonRotated.Size.Y / 2)).ToPoint(), nonRotated.Size);
-        public Rectangle axisAlignedBoundingBox
+        public Rectangle AxisAlignedBoundingBox
         {
             get
             {
@@ -74,8 +74,8 @@ namespace TopDownDriver
             }
         }
 
-        static bool QuickIntersect(Hitbox hitbox1, Hitbox hitbox2) => hitbox1.axisAlignedBoundingBox.Intersects(hitbox2.axisAlignedBoundingBox);
-        public bool Intersects(Hitbox hitbox2, out List<Vector2> intersectionPoints) => Intersects(this, hitbox2, out intersectionPoints);
+        static bool QuickIntersect(Hitbox hitbox1, Hitbox hitbox2) => hitbox1.AxisAlignedBoundingBox.Intersects(hitbox2.AxisAlignedBoundingBox);
+        public readonly bool Intersects(Hitbox hitbox2, out List<Vector2> intersectionPoints) => Intersects(this, hitbox2, out intersectionPoints);
         public static bool Intersects(Hitbox hitbox1, Hitbox hitbox2, out List<Vector2> intersectionPoints)
         {
             intersectionPoints = new List<Vector2>();
@@ -90,23 +90,19 @@ namespace TopDownDriver
             return intersectionPoints.Count != 0;
         }
 
-        public Vector2 FindNormal(Vector2 pointOnRectangle) => FindNormal(this, pointOnRectangle);
+        public readonly Vector2 FindNormal(Vector2 pointOnRectangle) => FindNormal(this, pointOnRectangle);
         public static Vector2 FindNormal(Hitbox hitbox, Vector2 pointOnRectangle) 
         {
             Line line = Line.Empty;
-
+            float MinDistance = float.MaxValue;
             foreach (Line l in hitbox.Sides)
-                if (l.PointOnLine(pointOnRectangle))
+            {
+                float distance = l.LineToPointDistance(pointOnRectangle);
+                if (distance < MinDistance)
+                {
                     line = l;
-
-            try
-            {
-                if (line.Equals(Line.Empty))
-                    throw new ArgumentException("Argument 'pointOnRectangle' not on the rectangle");
-            }
-            catch
-            {
-                return Vector2.Zero;
+                    MinDistance = distance;
+                }
             }
             
             return Vector2.Normalize(line.Centre - hitbox.Centre);

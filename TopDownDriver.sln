@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TopDownDriver", "TopDownDriver\TopDownDriver.csproj", "{1213BE79-4C77-4D6D-B0F0-91B92269EBA0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TopDownDriver", "TopDownDriver\TopDownDriver.csproj", "{1213BE79-4C77-4D6D-B0F0-91B92269EBA0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AC614CA7-ACD0-41AE-B2EA-E52E3370CA84}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
