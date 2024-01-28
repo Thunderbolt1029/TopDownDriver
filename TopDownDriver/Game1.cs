@@ -21,6 +21,8 @@ namespace TopDownDriver
 
         Player[] players = new Player[4];
 
+        bool UsingController = false;
+
         Keys[] KeyboardHeldButtons = System.Array.Empty<Keys>(), KeyboardPreviousHeldButtons = System.Array.Empty<Keys>();
         Keys[] KeyboardClickedButtons => KeyboardHeldButtons.Except(KeyboardPreviousHeldButtons).ToArray();
         Buttons[][] ControllerHeldButtons = new Buttons[4][], ControllerPreviousHeldButtons = new Buttons[4][];
@@ -55,7 +57,7 @@ namespace TopDownDriver
                 Zoom = 1.5f
             };
 
-            players[0] = new Player(GraphicsDevice, new Vector2(100), 0f, PlayerIndex.One);
+            players[0] = new Player(GraphicsDevice, new Vector2(100), 0f, PlayerIndex.One, UsingController);
 
             for (int i = 0; i < 4; i++)
                 ControllerHeldButtons[i] = System.Array.Empty<Buttons>();
@@ -87,15 +89,18 @@ namespace TopDownDriver
             
             for (int i = (int)PlayerIndex.One; i <= (int)PlayerIndex.Four; i++)
             {
+                if (!UsingController && i == 3) break;
+                int j = UsingController ? i : i + 1;
+
                 if (GamePad.GetState(i).IsConnected)
                 {
-                    if (players[i] == null && ControllerClickedButtons[i].Contains(Buttons.Start))
-                        players[i] = new Player(GraphicsDevice, new Vector2(100), 0f, (PlayerIndex)i);
+                    if (players[j] == null && ControllerClickedButtons[i].Contains(Buttons.Start))
+                        players[j] = new Player(GraphicsDevice, new Vector2(100), 0f, (PlayerIndex)j, UsingController);
                     else if (ControllerClickedButtons[i].Contains(Buttons.Back))
-                        players[i] = null;
+                        players[j] = null;
                 }
-                else if (players[i] != null)
-                    players[i] = null;
+                else if (players[j] != null)
+                    players[j] = null;
             }
 
             if (camera.Zoom > 0.5f && (ControllerClickedButtons[0].Contains(Buttons.LeftShoulder) || KeyboardClickedButtons.Contains(Keys.OemMinus)))
@@ -104,10 +109,6 @@ namespace TopDownDriver
                 camera.Zoom += 0.5f;
             if (ControllerClickedButtons[0].Contains(Buttons.Y) || KeyboardClickedButtons.Contains(Keys.OemOpenBrackets))
                 camera.Zoom = 1.5f;
-
-            //if (!Globals.UsingController && ControllerClickedButtons[0].Length != 0) Globals.UsingController = true;
-            //if (Globals.UsingController && KeyboardClickedButtons.Length != 0) Globals.UsingController = false;
-
 
 
             //  Update players 
@@ -143,7 +144,7 @@ namespace TopDownDriver
                     _spriteBatch.Draw(Background, new Vector2(x, y), null, Color.White, 0f, Vector2.Zero, 1, SpriteEffects.None, 1);
 
             foreach (Hitbox hitbox in Globals.Bounds)
-                _spriteBatch.Draw(ColorTexture, hitbox.DisplayRectangle, null, Color.Black, hitbox.rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
+                _spriteBatch.Draw(ColorTexture, hitbox.DisplayRectangle, null, Color.Black, hitbox.Rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
 
             foreach (Player player in players)
                 player?.Draw(_spriteBatch);

@@ -10,20 +10,18 @@ namespace TopDownDriver
 {
     internal static class Globals
     {
-        public static bool UsingController = true;
-
         public static List<Hitbox> Bounds = new List<Hitbox>();
 
         public static void Initialize()
         {
             Bounds.AddRange(new[]
             {
-                new Hitbox(new Rectangle(-10, -10, 20, 740), 0f),
-                new Hitbox(new Rectangle(-10, 710, 1100, 20), 0f),
-                new Hitbox(new Rectangle(1070, -10, 20, 740), 0f),
-                new Hitbox(new Rectangle(-10, -10, 1100, 20), 0f),
+                new Hitbox(new Vector2(540, 0), new Vector2(1080, 20), 0f),
+                new Hitbox(new Vector2(540, 720), new Vector2(1080, 20), 0f),
+                new Hitbox(new Vector2(0, 360), new Vector2(20, 720), 0f),
+                new Hitbox(new Vector2(1080, 360), new Vector2(20, 720), 0f),
 
-                new Hitbox(new Rectangle(490, 310, 100, 100), MathHelper.PiOver4 / 2)
+                new Hitbox(new Vector2(540, 360), new Vector2(100, 100), MathHelper.PiOver4 / 2)
             });
         }        
     }

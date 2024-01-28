@@ -10,5 +10,6 @@ namespace TopDownDriver
     internal static class Extensions
     {
         public static Vector2 DirectionVector(this Vector2 vector) => vector.Length() > 0 ? Vector2.Normalize(vector) : Vector2.Zero;
+        public static Vector2 IgnoreZ(this Vector3 vector) => new Vector2(vector.X, vector.Y);
     }
 }

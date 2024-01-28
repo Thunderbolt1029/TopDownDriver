@@ -22,7 +22,7 @@ namespace TopDownDriver
             Rotation = rotation;
         }
 
-        public Rectangle DisplayRectangle => new Rectangle(Centre.ToPoint(), Size.ToPoint());
+        public Rectangle DisplayRectangle => new Rectangle(Vector2.Round(new Vector2(Centre.X, Centre.Y)).ToPoint(), Size.ToPoint());
         public Rectangle AxisAlignedBoundingBox
         {
             get
