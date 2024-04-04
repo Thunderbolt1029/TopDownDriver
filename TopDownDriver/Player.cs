@@ -160,6 +160,25 @@ namespace TopDownDriver
                 AngularVelocity += steering * SteeringStrength * delta;
             }
 
+            if (Grappling)
+            {
+                // Apply grapple turn forces
+                float IdealRotation = MathHelper.WrapAngle(VectorToAngle(GrappleMoveDirection));
+
+                if (IdealRotation > Rotation + MathHelper.Pi)
+                    IdealRotation -= MathHelper.TwoPi;
+                else if (IdealRotation < Rotation - MathHelper.Pi)
+                    IdealRotation += MathHelper.TwoPi;
+
+                AngularVelocity = Math.Clamp(MathHelper.Lerp(Rotation, IdealRotation, GrappleRotationSnapSpeed) - Rotation, -SteeringStrength, SteeringStrength) * delta;
+                Rotation += Math.Clamp(MathHelper.Lerp(Rotation, IdealRotation, GrappleRotationSnapSpeed) - Rotation, -SteeringStrength, SteeringStrength) * delta;
+            }
+            else
+            {
+                // Apply turn force
+                AngularVelocity += steering * SteeringStrength * delta;
+            }
+
             // Resistive forces
             AngularVelocity *= 1 - RotationalFrictionStrength;
             LinearVelocity *= 1 - LinearFrictionStrength;
