@@ -129,7 +129,7 @@ namespace TopDownDriver
             // Set grapple point
             if (Grappling && !PrevGrapple)
             {
-                GrapplePoint = Globals.GrapplePoints.MinBy(x => (Centre - x).LengthSquared());
+                GrapplePoint = Globals.CurrentLevel.GrapplePoints.MinBy(x => (Centre - x).LengthSquared());
                 Vector2 vector = Vector3.Cross(new Vector3(GrapplePoint - Centre, 0), Vector3.UnitZ).IgnoreZ();
                 vector.Normalize();
                 ClockwiseGrapple = Vector2.Dot(vector, LinearVelocity) < 0;
@@ -181,7 +181,7 @@ namespace TopDownDriver
 
             // Collision
             Vector2 CollisionForce = Vector2.Zero;
-            foreach (Hitbox boundary in Globals.Bounds)
+            foreach (Hitbox boundary in Globals.CurrentLevel.Bounds)
                 if (boundary.Intersects(Hitbox, out List<Vector2> intersectionPoints))
                 {
                     Vector2 intersectionCentre = new Vector2(intersectionPoints.Average(x => x.X), intersectionPoints.Average(x => x.Y));

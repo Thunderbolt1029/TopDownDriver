@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
+using System.IO;
 
 namespace TopDownDriver
 {
@@ -66,7 +68,7 @@ namespace TopDownDriver
             players[0] = new Player(GraphicsDevice, new Vector2(100), 0f, PlayerIndex.One, UsingController);
 
             for (int i = 0; i < 4; i++)
-                ControllerHeldButtons[i] = System.Array.Empty<Buttons>();
+                ControllerHeldButtons[i] = Array.Empty<Buttons>();
 
             Globals.Initialize(GraphicsDevice);
 
@@ -85,6 +87,9 @@ namespace TopDownDriver
             Background = Content.Load<Texture2D>("Textures/Background");
 
             GrapplePointTexture = CreatePolygonTexture(10, GrapplePointTextureRadius);
+
+            foreach (string file in Directory.EnumerateFiles("Levels/", "*.json"))
+                Globals.Levels.Add(Level.FromJson(File.ReadAllText(file)));
         }
 
         protected override void Update(GameTime gameTime)
@@ -151,12 +156,12 @@ namespace TopDownDriver
                 for (int y = BackgroundOutRectangle.Top; y < BackgroundOutRectangle.Bottom; y += Background.Height)
                     _spriteBatch.Draw(Background, new Vector2(x, y), null, Color.White, 0f, Vector2.Zero, 1, SpriteEffects.None, 1);
 
-            foreach (Hitbox hitbox in Globals.Bounds)
+            foreach (Hitbox hitbox in Globals.CurrentLevel.Bounds)
                 _spriteBatch.Draw(ColorTexture, hitbox.DisplayRectangle, null, Color.Black, hitbox.Rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
 
             float Scale = 0.4f;
-            for (int i = 0; i < Globals.GrapplePoints.Count; i++)
-                _spriteBatch.Draw(GrapplePointTexture, Globals.GrapplePoints[i] - GrapplePointTexture.Bounds.Size.ToVector2() * Scale / (2 * (float)GrapplePointTextureRadius), null, Color.LightBlue, 0f, Vector2.Zero, Scale / (float)GrapplePointTextureRadius, SpriteEffects.None, 0f);
+            for (int i = 0; i < Globals.CurrentLevel.GrapplePoints.Count; i++)
+                _spriteBatch.Draw(GrapplePointTexture, Globals.CurrentLevel.GrapplePoints[i] - GrapplePointTexture.Bounds.Size.ToVector2() * Scale / (2 * (float)GrapplePointTextureRadius), null, Color.LightBlue, 0f, Vector2.Zero, Scale / (float)GrapplePointTextureRadius, SpriteEffects.None, 0f);
 
             foreach (Player player in players)
                 player?.Draw(_spriteBatch);

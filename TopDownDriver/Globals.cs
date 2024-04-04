@@ -13,24 +13,34 @@ namespace TopDownDriver
 {
     internal static class Globals
     {
-        public static List<Hitbox> Bounds = new List<Hitbox>();
-        public static List<Vector2> GrapplePoints = new List<Vector2>();
+        public static List<Level> Levels = new List<Level>();
+        public static string CurrentLevelName = "Level0";
+        public static Level CurrentLevel => Levels.First(x => x.Name == CurrentLevelName);
 
         public static void Initialize(GraphicsDevice graphicsDevice)
         {
-            Bounds.AddRange(new[]
+            /*
+            Levels.Add(new Level()
             {
-                new Hitbox(new Vector2(540, 0), new Vector2(1080, 20), 0f),
-                new Hitbox(new Vector2(540, 720), new Vector2(1080, 20), 0f),
-                new Hitbox(new Vector2(0, 360), new Vector2(20, 720), 0f),
-                new Hitbox(new Vector2(1080, 360), new Vector2(20, 720), 0f),
+                Name = "Level0",
+                Bounds = new List<Hitbox>()
+                {
+                    new Hitbox(new Vector2(540, 0), new Vector2(1080, 20), 0f),
+                    new Hitbox(new Vector2(540, 720), new Vector2(1080, 20), 0f),
+                    new Hitbox(new Vector2(0, 360), new Vector2(20, 720), 0f),
+                    new Hitbox(new Vector2(1080, 360), new Vector2(20, 720), 0f),
 
-                new Hitbox(new Vector2(540, 360), new Vector2(100, 100), MathHelper.PiOver4 / 2)
+                    new Hitbox(new Vector2(540, 360), new Vector2(100, 100), MathHelper.PiOver4 / 2)
+                },
+                GrapplePoints = new List<Vector2>()
+                {
+                    new Hitbox(new Vector2(540, 360), new Vector2(100, 100), MathHelper.PiOver4 / 2).Corners[0],
+                    new Hitbox(new Vector2(540, 360), new Vector2(100, 100), MathHelper.PiOver4 / 2).Corners[1],
+                    new Hitbox(new Vector2(540, 360), new Vector2(100, 100), MathHelper.PiOver4 / 2).Corners[2],
+                    new Hitbox(new Vector2(540, 360), new Vector2(100, 100), MathHelper.PiOver4 / 2).Corners[3],
+                }
             });
-
-            GrapplePoints.AddRange(Bounds[4].Corners);
+            */
         }
-
-        
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace TopDownDriver
@@ -22,7 +23,9 @@ namespace TopDownDriver
             Rotation = rotation;
         }
 
+        [JsonIgnore]
         public Rectangle DisplayRectangle => new Rectangle(Vector2.Round(new Vector2(Centre.X, Centre.Y)).ToPoint(), Size.ToPoint());
+        [JsonIgnore]
         public Rectangle AxisAlignedBoundingBox
         {
             get
@@ -40,6 +43,7 @@ namespace TopDownDriver
             }
         }
 
+        [JsonIgnore]
         public Vector2[] Corners
         {
             get
@@ -59,6 +63,7 @@ namespace TopDownDriver
             }
         }
 
+        [JsonIgnore]
         public Line[] Sides
         {
             get
