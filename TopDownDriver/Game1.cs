@@ -1,6 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame;
+using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,12 +19,15 @@ namespace TopDownDriver
 
         Texture2D ColorTexture;
 
+        const int GrapplePointTextureRadius = 10;
+        Texture2D GrapplePointTexture;
+
         Texture2D Background;
         readonly Rectangle BackgroundOutRectangle = new Rectangle(-600, -400, 2200, 1500);
 
         Player[] players = new Player[4];
 
-        bool UsingController = false;
+        bool UsingController = true;
 
         Keys[] KeyboardHeldButtons = System.Array.Empty<Keys>(), KeyboardPreviousHeldButtons = System.Array.Empty<Keys>();
         Keys[] KeyboardClickedButtons => KeyboardHeldButtons.Except(KeyboardPreviousHeldButtons).ToArray();
@@ -54,7 +60,7 @@ namespace TopDownDriver
 
             camera = new Camera
             {
-                Zoom = 1.5f
+                Zoom = 1.0f
             };
 
             players[0] = new Player(GraphicsDevice, new Vector2(100), 0f, PlayerIndex.One, UsingController);
@@ -62,7 +68,7 @@ namespace TopDownDriver
             for (int i = 0; i < 4; i++)
                 ControllerHeldButtons[i] = System.Array.Empty<Buttons>();
 
-            Globals.Initialize();
+            Globals.Initialize(GraphicsDevice);
 
             base.Initialize();
         }
@@ -77,6 +83,8 @@ namespace TopDownDriver
             Player.PlayerIndexTextures = PlayerTextures;
 
             Background = Content.Load<Texture2D>("Textures/Background");
+
+            GrapplePointTexture = CreatePolygonTexture(10, GrapplePointTextureRadius);
         }
 
         protected override void Update(GameTime gameTime)
@@ -103,12 +111,12 @@ namespace TopDownDriver
                     players[j] = null;
             }
 
-            if (camera.Zoom > 0.5f && (ControllerClickedButtons[0].Contains(Buttons.LeftShoulder) || KeyboardClickedButtons.Contains(Keys.OemMinus)))
+            if (camera.Zoom > 0.0f && (ControllerClickedButtons[0].Contains(Buttons.LeftShoulder) || KeyboardClickedButtons.Contains(Keys.OemMinus)))
                 camera.Zoom -= 0.5f;
-            if (camera.Zoom < 2.5f && (ControllerClickedButtons[0].Contains(Buttons.RightShoulder) || KeyboardClickedButtons.Contains(Keys.OemPlus)))
+            if (camera.Zoom < 2.0f && (ControllerClickedButtons[0].Contains(Buttons.RightShoulder) || KeyboardClickedButtons.Contains(Keys.OemPlus)))
                 camera.Zoom += 0.5f;
             if (ControllerClickedButtons[0].Contains(Buttons.Y) || KeyboardClickedButtons.Contains(Keys.OemOpenBrackets))
-                camera.Zoom = 1.5f;
+                camera.Zoom = 1.0f;
 
 
             //  Update players 
@@ -145,6 +153,10 @@ namespace TopDownDriver
 
             foreach (Hitbox hitbox in Globals.Bounds)
                 _spriteBatch.Draw(ColorTexture, hitbox.DisplayRectangle, null, Color.Black, hitbox.Rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
+
+            float Scale = 0.4f;
+            for (int i = 0; i < Globals.GrapplePoints.Count; i++)
+                _spriteBatch.Draw(GrapplePointTexture, Globals.GrapplePoints[i] - GrapplePointTexture.Bounds.Size.ToVector2() * Scale / (2 * (float)GrapplePointTextureRadius), null, Color.LightBlue, 0f, Vector2.Zero, Scale / (float)GrapplePointTextureRadius, SpriteEffects.None, 0f);
 
             foreach (Player player in players)
                 player?.Draw(_spriteBatch);
@@ -208,5 +220,119 @@ namespace TopDownDriver
                 ControllerHeldButtons[(int)i] = buttons.ToArray();
             }
         }
+
+        Texture2D CreatePolygonTexture(int noSides, int radius)
+        {
+            radius *= 10;
+
+            Color[,] colors = new Color[radius * 2 + 2, radius * 2 + 2];
+            for (int x = 0; x < radius * 2 + 2; x++)
+                for (int y = 0; y < radius * 2 + 2; y++)
+                    colors[x, y] = Color.Transparent;
+
+            Point centre = new Point(radius);
+
+            // Create lines for the sides of the polygon
+            Point[] vertices = new Point[noSides];
+            for (int i = 0; i < noSides; i++)
+                vertices[i] = (centre.ToVector2() + AngleToVector(((float)i + 0.5f) * MathHelper.TwoPi / (float)noSides) * radius).ToPoint();
+
+            for (int i = 0; i < noSides; i++)
+            {
+                Point Start = vertices[i];
+                Point End = vertices[(i + 1) % noSides];
+
+                int x0 = Start.X;
+                int x1 = End.X;
+                int y0 = Start.Y;
+                int y1 = End.Y;
+
+                int dx = Math.Abs(x1 - x0);
+                int sx = x0 < x1 ? 1 : -1;
+                int dy = -Math.Abs(y1 - y0);
+                int sy = y0 < y1 ? 1 : -1;
+                int error = dx + dy;
+
+                while (true)
+                {
+                    colors[x0, y0] = Color.White;
+
+                    if (x0 == x1 && y0 == y1) break;
+                    int e2 = 2 * error;
+                    if (e2 >= error)
+                    {
+                        if (x0 == x1) break;
+                        error += dy;
+                        x0 += sx;
+                    }
+                    if (e2 <= dx)
+                    {
+                        if (y0 == y1) break;
+                        error += dx;
+                        y0 += sy;
+                    }
+                }
+            }
+
+            List<Color> colors1 = new List<Color>();
+            for (int x = 0; x < radius * 2 + 2; x++)
+                for (int y = 0; y < radius * 2 + 2; y++)
+                    colors1.Add(colors[x, y]);
+
+            Color[] colors2 = FloodFill(colors1.ToArray(), centre, radius);
+
+            Texture2D texture = new Texture2D(GraphicsDevice, radius * 2 + 2, radius * 2 + 2);
+            texture.SetData(colors2);
+            return texture;
+        }
+
+        static Color[] FloodFill(Color[] colors, Point startPos, int radius)
+        {
+            Queue<Point> queue = new Queue<Point>();
+            queue.Enqueue(startPos);
+
+            while (queue.Count > 0)
+            {
+                Point point = queue.Dequeue();
+
+                colors[point.X + point.Y * (radius * 2 + 2)] = Color.White;
+
+                if ((startPos.X - point.X) * (startPos.X - point.X) + (startPos.Y - point.Y) * (startPos.Y - point.Y) > radius * radius || queue.Contains(point))
+                    continue;
+
+                if (colors[point.X + 1 + point.Y * (radius * 2 + 2)].A == 0)
+                    queue.Enqueue(new Point(point.X + 1, point.Y));
+
+                if (colors[point.X - 1 + point.Y * (radius * 2 + 2)].A == 0)
+                    queue.Enqueue(new Point(point.X - 1, point.Y));
+
+                if (colors[point.X + (point.Y + 1) * (radius * 2 + 2)].A == 0)
+                    queue.Enqueue(new Point(point.X, point.Y + 1));
+
+                if (colors[point.X + (point.Y - 1) * (radius * 2 + 2)].A == 0)
+                    queue.Enqueue(new Point(point.X, point.Y - 1));
+            }
+
+            return colors;
+        }
+
+        /*
+        Flood-fill (node):
+        1. Set Q to the empty queue or stack.
+        2. Add node to the end of Q.
+        3. While Q is not empty:
+        4.   Set n equal to the first element of Q.
+        5.   Remove first element from Q.
+        6.   If n is Inside:
+               Set the n
+               Add the node to the west of n to the end of Q.
+               Add the node to the east of n to the end of Q.
+               Add the node to the north of n to the end of Q.
+               Add the node to the south of n to the end of Q.
+        7. Continue looping until Q is exhausted.
+        8. Return.
+        */
+
+        static Vector2 AngleToVector(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));
     }
 }
