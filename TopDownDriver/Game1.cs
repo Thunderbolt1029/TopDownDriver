@@ -65,12 +65,11 @@ namespace TopDownDriver
                 Zoom = 1.0f
             };
 
-            players[0] = new Player(GraphicsDevice, new Vector2(100), 0f, PlayerIndex.One, UsingController);
-
             for (int i = 0; i < 4; i++)
                 ControllerHeldButtons[i] = Array.Empty<Buttons>();
 
             Globals.Initialize(GraphicsDevice);
+            LoadLevelIntoEditor("Level0");
 
             base.Initialize();
         }
@@ -98,8 +97,23 @@ namespace TopDownDriver
             if (KeyboardHeldButtons.Contains(Keys.Escape))
                 Exit();
 
+            //InGameUpdate(gameTime);
+            LevelEditorUpdate(gameTime);
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            //InGameDraw(gameTime);
+            LevelEditorDraw(gameTime);
+        }
+
+        #region InGame
+        void InGameUpdate(GameTime gameTime)
+        {
             // Options
-            
+
             for (int i = (int)PlayerIndex.One; i <= (int)PlayerIndex.Four; i++)
             {
                 if (!UsingController && i == 3) break;
@@ -108,7 +122,7 @@ namespace TopDownDriver
                 if (GamePad.GetState(i).IsConnected)
                 {
                     if (players[j] == null && ControllerClickedButtons[i].Contains(Buttons.Start))
-                        players[j] = new Player(GraphicsDevice, new Vector2(100), 0f, (PlayerIndex)j, UsingController);
+                        players[j] = new Player(GraphicsDevice, Globals.CurrentLevel.SpawnPoint, 0f, (PlayerIndex)j, UsingController);
                     else if (ControllerClickedButtons[i].Contains(Buttons.Back))
                         players[j] = null;
                 }
@@ -145,10 +159,8 @@ namespace TopDownDriver
             }
         }
 
-        protected override void Draw(GameTime gameTime)
+        void InGameDraw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-
             // Draw from camera perspective
             _spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, null, null, null, null, camera.GetTransformation(GraphicsDevice));
 
@@ -175,6 +187,97 @@ namespace TopDownDriver
 
             _spriteBatch.End();
         }
+        #endregion
+
+        #region LevelEditor
+        EditingLevel editingLevel;
+        MouseState CurrentMouseState, PreviousMouseState;
+
+        void LevelEditorUpdate(GameTime gameTime)
+        {
+            PreviousMouseState = CurrentMouseState;
+            CurrentMouseState = Mouse.GetState();
+
+            bool MouseClick = CurrentMouseState.LeftButton == ButtonState.Pressed && PreviousMouseState.LeftButton == ButtonState.Released;
+            Vector2 AdjustedMousePos = CurrentMouseState.Position.ToVector2() - GraphicsDevice.Viewport.Bounds.Size.ToVector2() / 2;
+            AdjustedMousePos /= camera.Zoom;
+            AdjustedMousePos += camera.Position;
+
+            for (int i = 0; i < editingLevel.Bounds.Count; i++)
+            {
+                if (MouseClick && editingLevel.Bounds[i].Item1.Contains(AdjustedMousePos))
+                    editingLevel.Bounds[i] = (editingLevel.Bounds[i].Item1, true);
+                else if (MouseClick)
+                    editingLevel.Bounds[i] = (editingLevel.Bounds[i].Item1, false);
+            }
+
+            for (int i = 0; i < editingLevel.GrapplePoints.Count; i++)
+            {
+                if (MouseClick && (editingLevel.GrapplePoints[i].Item1 - AdjustedMousePos).Length() < GrapplePointTextureRadius)
+                    editingLevel.GrapplePoints[i] = (editingLevel.GrapplePoints[i].Item1, true);
+                else if (MouseClick)
+                    editingLevel.GrapplePoints[i] = (editingLevel.GrapplePoints[i].Item1, false);
+            }
+
+            if (MouseClick && new Rectangle((int)Math.Round(editingLevel.SpawnPoint.Item1.X - 10), (int)Math.Round(editingLevel.SpawnPoint.Item1.Y - 10), 20, 10).Contains(AdjustedMousePos))
+                editingLevel.SpawnPoint = (editingLevel.SpawnPoint.Item1, true);
+            else if (MouseClick)
+                editingLevel.SpawnPoint = (editingLevel.SpawnPoint.Item1, false);
+
+            // Update camera
+            if (KeyboardHeldButtons.Contains(Keys.D))
+                camera.Position += Vector2.UnitX * 10;
+            if (KeyboardHeldButtons.Contains(Keys.A))
+                camera.Position -= Vector2.UnitX * 10;
+            if (KeyboardHeldButtons.Contains(Keys.S))
+                camera.Position += Vector2.UnitY * 10;
+            if (KeyboardHeldButtons.Contains(Keys.W))
+                camera.Position -= Vector2.UnitY * 10;
+
+            if (KeyboardClickedButtons.Contains(Keys.OemMinus))
+                camera.Zoom -= 0.1f;
+            if (KeyboardClickedButtons.Contains(Keys.OemPlus))
+                camera.Zoom += 0.1f;
+            if (KeyboardClickedButtons.Contains(Keys.OemOpenBrackets))
+                camera.Zoom = 1.0f;
+        }
+
+        void LevelEditorDraw(GameTime gameTime)
+        {
+            // Draw from camera perspective
+            _spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, null, null, null, null, camera.GetTransformation(GraphicsDevice));
+
+            // Background tiles
+            for (int x = BackgroundOutRectangle.Left; x < BackgroundOutRectangle.Right; x += Background.Width)
+                for (int y = BackgroundOutRectangle.Top; y < BackgroundOutRectangle.Bottom; y += Background.Height)
+                    _spriteBatch.Draw(Background, new Vector2(x, y), null, Color.White, 0f, Vector2.Zero, 1, SpriteEffects.None, 1);
+
+            foreach ((Hitbox, bool) hitbox in editingLevel.Bounds)
+                _spriteBatch.Draw(ColorTexture, hitbox.Item1.DisplayRectangle, null, new Color(Color.Black, hitbox.Item2 ? 1 : 0.5f), hitbox.Item1.Rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
+
+            float Scale = 0.4f;
+            for (int i = 0; i < editingLevel.GrapplePoints.Count; i++)
+                _spriteBatch.Draw(GrapplePointTexture, editingLevel.GrapplePoints[i].Item1 - GrapplePointTexture.Bounds.Size.ToVector2() * Scale / (2 * (float)GrapplePointTextureRadius), null, new Color(Color.LightBlue, editingLevel.GrapplePoints[i].Item2 ? 1 : 0.5f), 0f, Vector2.Zero, Scale / (float)GrapplePointTextureRadius, SpriteEffects.None, 0f);
+
+            _spriteBatch.Draw(ColorTexture, new Rectangle((int)Math.Round(editingLevel.SpawnPoint.Item1.X - 10), (int)Math.Round(editingLevel.SpawnPoint.Item1.Y - 10), 20, 10), new Color(Color.Red, editingLevel.SpawnPoint.Item2 ? 1 : 0.5f));
+
+            _spriteBatch.End();
+
+            // Draw UI
+            _spriteBatch.Begin();
+
+            
+
+            _spriteBatch.End();
+        }
+
+        void LoadLevelIntoEditor(string name)
+        {
+            string json = File.ReadAllText($"Levels/{name}.json");
+            Level level = Level.FromJson(json);
+            editingLevel = EditingLevel.LoadLevel(level);
+        }
+        #endregion
 
         void UpdateInputs()
         {
@@ -320,23 +423,6 @@ namespace TopDownDriver
 
             return colors;
         }
-
-        /*
-        Flood-fill (node):
-        1. Set Q to the empty queue or stack.
-        2. Add node to the end of Q.
-        3. While Q is not empty:
-        4.   Set n equal to the first element of Q.
-        5.   Remove first element from Q.
-        6.   If n is Inside:
-               Set the n
-               Add the node to the west of n to the end of Q.
-               Add the node to the east of n to the end of Q.
-               Add the node to the north of n to the end of Q.
-               Add the node to the south of n to the end of Q.
-        7. Continue looping until Q is exhausted.
-        8. Return.
-        */
 
         static Vector2 AngleToVector(float theta) => new Vector2((float)Math.Cos(theta), (float)Math.Sin(theta));
     }

@@ -95,6 +95,22 @@ namespace TopDownDriver
             return intersectionPoints.Count != 0;
         }
 
+        public bool Contains(Vector2 point) => Contains(this, point);
+        public static bool Contains(Hitbox hitbox, Vector2 point)
+        {
+            Vector2 AB = hitbox.Corners[1] - hitbox.Corners[0];
+            Vector2 AM = point - hitbox.Corners[0];
+            Vector2 BC = hitbox.Corners[2] - hitbox.Corners[1];
+            Vector2 BM = point - hitbox.Corners[1];
+            
+            float dotABAM = Vector2.Dot(AB, AM);
+            float dotABAB = Vector2.Dot(AB, AB);
+            float dotBCBM = Vector2.Dot(BC, BM);
+            float dotBCBC = Vector2.Dot(BC, BC);
+
+            return 0 <= dotABAM && dotABAM <= dotABAB && 0 <= dotBCBM && dotBCBM <= dotBCBC;
+        }
+
         public readonly Vector2 FindNormal(Vector2 pointOnRectangle) => FindNormal(this, pointOnRectangle);
         public static Vector2 FindNormal(Hitbox hitbox, Vector2 pointOnRectangle) 
         {
