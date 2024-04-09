@@ -1,12 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-// TODO: Finer movement control of objects - drag? shift/ctrl for larger movements?
+// TODO: Finer movement control of objects - drag?
 // TODO: IO to JSON of level
 // TODO: Create and delete objects
 
@@ -20,8 +21,11 @@ namespace TopDownDriver
         Vector2 GrapplePointLocation;
         SpawnPoint SpawnPoint;
 
-        public Rectangle Background { get; private set; } = new Rectangle(10, 10, 300, 90);
+        public Rectangle Background { get; private set; } = new Rectangle(10, 10, 400, 90);
         List<Button> buttons = new List<Button>();
+
+        bool Shift, Ctrl;
+        int ModeScale => (Shift ? 10 : 1) * (Ctrl ? 100 : 1);
 
         public ObjectPropertyUIBox(ObjectType objectType, int index = -1)
         {
@@ -33,18 +37,18 @@ namespace TopDownDriver
 
                 buttons.AddRange(new[]
                 {
-                    new Button(() => { Boundary.Centre -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f), 
-                    new Button(() => { Boundary.Centre += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Centre -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Centre += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Centre -= Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f), 
+                    new Button(() => { Boundary.Centre += Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Centre -= Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Centre += Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
                     
-                    new Button(() => { Boundary.Rotation -= MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Rotation += MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Rotation -= MathHelper.PiOver4  * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Rotation += MathHelper.PiOver4  * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
 
-                    new Button(() => { Boundary.Size -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 75, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Size += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 75, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Size -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 75, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Size += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 75, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size -= Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(15, 75, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size += Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(40, 75, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size -= Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(70, 75, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size += Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(95, 75, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
                     
                 });
             }
@@ -54,10 +58,10 @@ namespace TopDownDriver
 
                 buttons.AddRange(new[]
                 {
-                    new Button(() => { GrapplePointLocation -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { GrapplePointLocation += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { GrapplePointLocation -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { GrapplePointLocation += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { GrapplePointLocation -= Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { GrapplePointLocation += Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { GrapplePointLocation -= Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { GrapplePointLocation += Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
                 });
             }
             else if (objectType == ObjectType.SpawnPoint)
@@ -66,13 +70,13 @@ namespace TopDownDriver
 
                 buttons.AddRange(new[]
                 {
-                    new Button(() => { SpawnPoint.Centre -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { SpawnPoint.Centre += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { SpawnPoint.Centre -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { SpawnPoint.Centre += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Centre -= Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Centre += Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Centre -= Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Centre += Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
 
-                    new Button(() => { SpawnPoint.Rotation -= MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { SpawnPoint.Rotation += MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Rotation -= MathHelper.PiOver4 * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Rotation += MathHelper.PiOver4 * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
                 });
             }
         }
@@ -97,6 +101,10 @@ namespace TopDownDriver
 
         public void Update(GameTime gameTime)
         {
+            KeyboardState keyboardState = Keyboard.GetState();
+            Shift = keyboardState.IsKeyDown(Keys.LeftShift) || keyboardState.IsKeyDown(Keys.RightShift);
+            Ctrl = keyboardState.IsKeyDown(Keys.LeftControl) || keyboardState.IsKeyDown(Keys.RightControl);
+
             foreach (Button button in buttons)
                 button.Update(gameTime);
         }

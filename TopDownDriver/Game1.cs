@@ -256,13 +256,13 @@ namespace TopDownDriver
 
             // Update camera
             if (KeyboardHeldButtons.Contains(Keys.D))
-                camera.Position += Vector2.UnitX * 10;
+                camera.Position += Vector2.UnitX * 10 / camera.Zoom;
             if (KeyboardHeldButtons.Contains(Keys.A))
-                camera.Position -= Vector2.UnitX * 10;
+                camera.Position -= Vector2.UnitX * 10 / camera.Zoom;
             if (KeyboardHeldButtons.Contains(Keys.S))
-                camera.Position += Vector2.UnitY * 10;
+                camera.Position += Vector2.UnitY * 10 / camera.Zoom;
             if (KeyboardHeldButtons.Contains(Keys.W))
-                camera.Position -= Vector2.UnitY * 10;
+                camera.Position -= Vector2.UnitY * 10 / camera.Zoom;
 
             if (KeyboardClickedButtons.Contains(Keys.OemMinus))
                 camera.Zoom -= 0.1f;
