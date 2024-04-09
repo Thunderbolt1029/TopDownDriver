@@ -78,17 +78,24 @@ namespace TopDownDriver
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            // Load car textures
             Texture2D[] PlayerTextures = new Texture2D[4];
             for (int i = 0; i < 4; i++)
                 PlayerTextures[i] = Content.Load<Texture2D>("Textures/Player/WhiteCar");
             Player.PlayerIndexTextures = PlayerTextures;
 
+            // Background tiled texture
             Background = Content.Load<Texture2D>("Textures/Background");
 
+            // Procedural grapple point "circle"
             GrapplePointTexture = CreatePolygonTexture(10, GrapplePointTextureRadius);
 
+            // Level files
             foreach (string file in Directory.EnumerateFiles("Levels/", "*.json"))
                 Globals.Levels.Add(Level.FromJson(File.ReadAllText(file)));
+
+            // Fonts
+            Fonts.PropertyEditorUI = new Font(Content.Load<SpriteFont>("Fonts/PropertyEditorUI"));
         }
 
         protected override void Update(GameTime gameTime)
@@ -183,15 +190,15 @@ namespace TopDownDriver
             // Draw UI
             _spriteBatch.Begin();
 
-            // TODO UI
+            // TODO: InGame UI
 
             _spriteBatch.End();
         }
         #endregion
 
         #region LevelEditor
-        EditingLevel editingLevel;
         MouseState CurrentMouseState, PreviousMouseState;
+        ObjectPropertyUIBox objectPropertyUIBox = new ObjectPropertyUIBox(ObjectType.None);
 
         void LevelEditorUpdate(GameTime gameTime)
         {
@@ -206,32 +213,46 @@ namespace TopDownDriver
             WorldMousePos += camera.Position;
 
             // Handle UI selections
-
-
-            // Handle highlighting for level objects
-            for (int i = 0; i < editingLevel.Bounds.Count; i++)
+            if (!objectPropertyUIBox.Background.Contains(CurrentMouseState.Position))
             {
-                if (MouseClick && editingLevel.Bounds[i].Item1.Contains(WorldMousePos))
-                    editingLevel.Bounds[i] = (editingLevel.Bounds[i].Item1, true);
+                // Handle highlighting for level objects
+
+                for (int i = 0; i < Globals.CurrentEditingLevel.Bounds.Count; i++)
+                {
+                    if (MouseClick && Globals.CurrentEditingLevel.Bounds[i].Item1.Contains(WorldMousePos))
+                    {
+                        Globals.CurrentEditingLevel.Bounds[i] = (Globals.CurrentEditingLevel.Bounds[i].Item1, true);
+                        objectPropertyUIBox = new ObjectPropertyUIBox(ObjectType.Boundary, i);
+                    }
+                    else if (MouseClick)
+                        Globals.CurrentEditingLevel.Bounds[i] = (Globals.CurrentEditingLevel.Bounds[i].Item1, false);
+                }
+
+                for (int i = 0; i < Globals.CurrentEditingLevel.GrapplePoints.Count; i++)
+                {
+                    if (MouseClick && (Globals.CurrentEditingLevel.GrapplePoints[i].Item1 - WorldMousePos).Length() < GrapplePointTextureRadius)
+                    {
+                        Globals.CurrentEditingLevel.GrapplePoints[i] = (Globals.CurrentEditingLevel.GrapplePoints[i].Item1, true);
+                        objectPropertyUIBox = new ObjectPropertyUIBox(ObjectType.GrapplePoint, i);
+                    }
+                    else if (MouseClick)
+                        Globals.CurrentEditingLevel.GrapplePoints[i] = (Globals.CurrentEditingLevel.GrapplePoints[i].Item1, false);
+                }
+
+                if (MouseClick && new Rectangle((int)Math.Round(Globals.CurrentEditingLevel.SpawnPoint.Item1.Centre.X - 10), (int)Math.Round(Globals.CurrentEditingLevel.SpawnPoint.Item1.Centre.Y - 10), (int)Math.Round(Player.Size.X), (int)Math.Round(Player.Size.Y)).Contains(WorldMousePos))
+                {
+                    Globals.CurrentEditingLevel.SpawnPoint = (Globals.CurrentEditingLevel.SpawnPoint.Item1, true);
+                    objectPropertyUIBox = new ObjectPropertyUIBox(ObjectType.SpawnPoint);
+                }
                 else if (MouseClick)
-                    editingLevel.Bounds[i] = (editingLevel.Bounds[i].Item1, false);
+                    Globals.CurrentEditingLevel.SpawnPoint = (Globals.CurrentEditingLevel.SpawnPoint.Item1, false);
+
+                if (!(Globals.CurrentEditingLevel.Bounds.Any(x => x.Item2) || Globals.CurrentEditingLevel.GrapplePoints.Any(x => x.Item2) || Globals.CurrentEditingLevel.SpawnPoint.Item2))
+                    objectPropertyUIBox = new ObjectPropertyUIBox(ObjectType.None);
             }
-
-            for (int i = 0; i < editingLevel.GrapplePoints.Count; i++)
-            {
-                if (MouseClick && (editingLevel.GrapplePoints[i].Item1 - WorldMousePos).Length() < GrapplePointTextureRadius)
-                    editingLevel.GrapplePoints[i] = (editingLevel.GrapplePoints[i].Item1, true);
-                else if (MouseClick)
-                    editingLevel.GrapplePoints[i] = (editingLevel.GrapplePoints[i].Item1, false);
-            }
-
-            if (MouseClick && new Rectangle((int)Math.Round(editingLevel.SpawnPoint.Item1.Centre.X - 10), (int)Math.Round(editingLevel.SpawnPoint.Item1.Centre.Y - 10), 20, 10).Contains(WorldMousePos))
-                editingLevel.SpawnPoint = (editingLevel.SpawnPoint.Item1, true);
-            else if (MouseClick)
-                editingLevel.SpawnPoint = (editingLevel.SpawnPoint.Item1, false);
-
-            // Handle manipulation of highlighted objects
-
+            else
+                // Handle manipulation of highlighted objects
+                objectPropertyUIBox.Update(gameTime);
 
             // Update camera
             if (KeyboardHeldButtons.Contains(Keys.D))
@@ -264,23 +285,24 @@ namespace TopDownDriver
             
             // Draw game objects
             // Boundaries
-            foreach ((Hitbox, bool) hitbox in editingLevel.Bounds)
+            foreach ((Hitbox, bool) hitbox in Globals.CurrentEditingLevel.Bounds)
                 _spriteBatch.Draw(ColorTexture, hitbox.Item1.DisplayRectangle, null, new Color(Color.Black, hitbox.Item2 ? 1 : 0.5f), hitbox.Item1.Rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
 
             // Grapple points
             float Scale = 0.4f;
-            for (int i = 0; i < editingLevel.GrapplePoints.Count; i++)
-                _spriteBatch.Draw(GrapplePointTexture, editingLevel.GrapplePoints[i].Item1 - GrapplePointTexture.Bounds.Size.ToVector2() * Scale / (2 * (float)GrapplePointTextureRadius), null, new Color(Color.LightBlue, editingLevel.GrapplePoints[i].Item2 ? 1 : 0.5f), 0f, Vector2.Zero, Scale / (float)GrapplePointTextureRadius, SpriteEffects.None, 0f);
+            for (int i = 0; i < Globals.CurrentEditingLevel.GrapplePoints.Count; i++)
+                _spriteBatch.Draw(GrapplePointTexture, Globals.CurrentEditingLevel.GrapplePoints[i].Item1 - GrapplePointTexture.Bounds.Size.ToVector2() * Scale / (2 * (float)GrapplePointTextureRadius), null, new Color(Color.LightBlue, Globals.CurrentEditingLevel.GrapplePoints[i].Item2 ? 1 : 0.5f), 0f, Vector2.Zero, Scale / (float)GrapplePointTextureRadius, SpriteEffects.None, 0f);
 
             // Spawn point
-            _spriteBatch.Draw(ColorTexture, new Rectangle((int)Math.Round(editingLevel.SpawnPoint.Item1.Centre.X - 10), (int)Math.Round(editingLevel.SpawnPoint.Item1.Centre.Y - 10), 20, 10), new Color(Color.Red, editingLevel.SpawnPoint.Item2 ? 1 : 0.5f));
+            _spriteBatch.Draw(ColorTexture, new Rectangle((int)Math.Round(Globals.CurrentEditingLevel.SpawnPoint.Item1.Centre.X - 10), (int)Math.Round(Globals.CurrentEditingLevel.SpawnPoint.Item1.Centre.Y - 10), 20, 10), null, new Color(Color.Red, Globals.CurrentEditingLevel.SpawnPoint.Item2 ? 1 : 0.5f), Globals.CurrentEditingLevel.SpawnPoint.Item1.Rotation, new Vector2(0.5f), SpriteEffects.None, 0f);
 
             _spriteBatch.End();
 
             // Draw UI
             _spriteBatch.Begin();
 
-            
+            // Object property UI
+            objectPropertyUIBox.Draw(_spriteBatch);
 
             _spriteBatch.End();
         }
@@ -289,7 +311,7 @@ namespace TopDownDriver
         {
             string json = File.ReadAllText($"Levels/{name}.json");
             Level level = Level.FromJson(json);
-            editingLevel = EditingLevel.LoadLevel(level);
+            Globals.CurrentEditingLevel = EditingLevel.LoadLevel(level);
         }
         #endregion
 

@@ -32,7 +32,7 @@ namespace TopDownDriver
         Color Color => PlayerIndexColors[(int)Index];
         Texture2D Texture => PlayerIndexTextures[(int)Index];
 
-        Vector2 Size = new Vector2(20, 10);
+        public static Vector2 Size { get; private set; } = new Vector2(20, 10);
 
 
         public Vector2 Centre { get; private set; }

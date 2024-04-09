@@ -17,6 +17,8 @@ namespace TopDownDriver
         public static string CurrentLevelName = "Level0";
         public static Level CurrentLevel => Levels.First(x => x.Name == CurrentLevelName);
 
+        public static EditingLevel CurrentEditingLevel;
+
         public static void Initialize(GraphicsDevice graphicsDevice)
         {
             

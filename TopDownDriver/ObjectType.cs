@@ -8,6 +8,7 @@ namespace TopDownDriver
 {
     internal enum ObjectType
     {
+        None,
         Boundary,
         GrapplePoint,
         SpawnPoint

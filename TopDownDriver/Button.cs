@@ -38,7 +38,7 @@ namespace TopDownDriver
             this.TextScale = TextScale;
         }
 
-        void Update(GameTime gameTime)
+        public void Update(GameTime gameTime)
         {
             CurrentMouseState = Mouse.GetState();
             PreviousFrameMouseHeld = CurrentFrameMouseHeld;
@@ -48,7 +48,7 @@ namespace TopDownDriver
                 action();
         }
 
-        void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch)
         {
             Texture2D ColorTexture = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
             ColorTexture.SetData(new[] { Color.White });
@@ -56,12 +56,12 @@ namespace TopDownDriver
             if (CurrentFrameMouseHeld && Rectangle.Contains(CurrentMouseState.Position))
             {
                 spriteBatch.Draw(ColorTexture, Rectangle, new Color(BackgroundColor.ToVector3() * 0.7f));
-                font.Draw(spriteBatch, Text, new Color(TextColor.ToVector3() * 0.7f), Rectangle.Center.ToVector2(), TextScale);
+                font.CenteredDraw(spriteBatch, Text, new Color(TextColor.ToVector3() * 0.7f), Rectangle.Center.ToVector2(), TextScale);
             }
             else
             {
                 spriteBatch.Draw(ColorTexture, Rectangle, BackgroundColor);
-                font.Draw(spriteBatch, Text, TextColor, Rectangle.Center.ToVector2(), TextScale);
+                font.CenteredDraw(spriteBatch, Text, TextColor, Rectangle.Center.ToVector2(), TextScale);
             }
         }
     }

@@ -1,9 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+// TODO: Finer movement control of objects - drag? shift/ctrl for larger movements?
+// TODO: IO to JSON of level
+// TODO: Create and delete objects
 
 namespace TopDownDriver
 {
@@ -13,39 +18,116 @@ namespace TopDownDriver
 
         Hitbox Boundary;
         Vector2 GrapplePointLocation;
-        SpawnPoint spawnPoint;
+        SpawnPoint SpawnPoint;
 
-        public ObjectPropertyUIBox(object Object)
+        public Rectangle Background { get; private set; } = new Rectangle(10, 10, 300, 90);
+        List<Button> buttons = new List<Button>();
+
+        public ObjectPropertyUIBox(ObjectType objectType, int index = -1)
         {
-            if (Object == null) 
-                throw new ArgumentNullException();
-            else if (Object is Hitbox)
+            this.objectType = objectType;
+            
+            if (objectType == ObjectType.Boundary)
             {
-                objectType = ObjectType.Boundary;
-                Boundary = (Hitbox)Object;
+                Boundary = Globals.CurrentEditingLevel.Bounds[index].Item1;
+
+                buttons.AddRange(new[]
+                {
+                    new Button(() => { Boundary.Centre -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f), 
+                    new Button(() => { Boundary.Centre += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Centre -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Centre += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    
+                    new Button(() => { Boundary.Rotation -= MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Rotation += MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
+
+                    new Button(() => { Boundary.Size -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 75, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 75, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 75, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 75, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    
+                });
             }
-            else if (Object is Vector2)
+            else if (objectType == ObjectType.GrapplePoint)
             {
-                objectType = ObjectType.GrapplePoint;
-                GrapplePointLocation = (Vector2)Object;
+                GrapplePointLocation = Globals.CurrentEditingLevel.GrapplePoints[index].Item1;
+
+                buttons.AddRange(new[]
+                {
+                    new Button(() => { GrapplePointLocation -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { GrapplePointLocation += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { GrapplePointLocation -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { GrapplePointLocation += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+                });
             }
-            else if (Object is SpawnPoint)
+            else if (objectType == ObjectType.SpawnPoint)
             {
-                objectType = ObjectType.SpawnPoint;
-                spawnPoint = (SpawnPoint)Object;
+                SpawnPoint = Globals.CurrentEditingLevel.SpawnPoint.Item1;
+
+                buttons.AddRange(new[]
+                {
+                    new Button(() => { SpawnPoint.Centre -= Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(15, 15, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Centre += Vector2.UnitX; UpdateVariables(objectType, index); }, new Rectangle(40, 15, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Centre -= Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Centre += Vector2.UnitY; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
+
+                    new Button(() => { SpawnPoint.Rotation -= MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Rotation += MathHelper.PiOver4 / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
+                });
             }
-            else
-                throw new ArgumentException("Object parameter must be a valid world object");
+        }
+
+        void UpdateVariables(ObjectType objectType, int index = -1)
+        {
+            switch (objectType) 
+            {
+                case ObjectType.Boundary:
+                    Globals.CurrentEditingLevel.Bounds[index] = (Boundary, Globals.CurrentEditingLevel.Bounds[index].Item2);
+                    break;
+
+                case ObjectType.GrapplePoint:
+                    Globals.CurrentEditingLevel.GrapplePoints[index] = (GrapplePointLocation, Globals.CurrentEditingLevel.GrapplePoints[index].Item2);
+                    break;
+
+                case ObjectType.SpawnPoint:
+                    Globals.CurrentEditingLevel.SpawnPoint = (SpawnPoint, Globals.CurrentEditingLevel.SpawnPoint.Item2);
+                    break;
+            }
         }
 
         public void Update(GameTime gameTime)
         {
-
+            foreach (Button button in buttons)
+                button.Update(gameTime);
         }
 
-        public void Draw(GameTime gameTime)
+        public void Draw(SpriteBatch spriteBatch)
         {
+            Texture2D ColorTexture = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
+            ColorTexture.SetData(new[] { Color.White } );
 
+            spriteBatch.Draw(ColorTexture, Background, Color.LightGray);
+
+            foreach (Button button in buttons)
+                button.Draw(spriteBatch);
+                
+            switch (objectType)
+            {
+                case ObjectType.Boundary:
+                    Fonts.PropertyEditorUI.LeftCenteredDraw(spriteBatch, $"Centre: {{X:{Math.Round(Boundary.Centre.X, 1)}, Y:{Math.Round(Boundary.Centre.Y, 1)}}}", Color.Black, new Vector2(130, 25), 1f);
+                    Fonts.PropertyEditorUI.LeftCenteredDraw(spriteBatch, $"Rotation: {Math.Round(Boundary.Rotation * 180 / MathHelper.Pi)}", Color.Black, new Vector2(130, 55), 1f);
+                    Fonts.PropertyEditorUI.LeftCenteredDraw(spriteBatch, $"Size: {{X:{Math.Round(Boundary.Size.X)}, Y:{Math.Round(Boundary.Size.Y)}}}", Color.Black, new Vector2(130, 85), 1f);
+                    break;
+                    
+                case ObjectType.GrapplePoint:
+                    Fonts.PropertyEditorUI.LeftCenteredDraw(spriteBatch, $"Location: {{X:{Math.Round(GrapplePointLocation.X, 1)}, Y:{Math.Round(GrapplePointLocation.Y, 1)}}}", Color.Black, new Vector2(130, 25), 1f);
+                    break; 
+                
+                case ObjectType.SpawnPoint:
+                    Fonts.PropertyEditorUI.LeftCenteredDraw(spriteBatch, $"Centre: {{X:{Math.Round(SpawnPoint.Centre.X, 1)}, Y:{Math.Round(SpawnPoint.Centre.Y, 1)}}}", Color.Black, new Vector2(130, 25), 1f);
+                    Fonts.PropertyEditorUI.LeftCenteredDraw(spriteBatch, $"Rotation: {Math.Round(SpawnPoint.Rotation * 180 / MathHelper.Pi)}", Color.Black, new Vector2(130, 55), 1f);
+                    break;
+            }
         }
     }
 }
