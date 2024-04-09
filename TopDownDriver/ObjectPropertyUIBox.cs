@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-// TODO: Finer movement control of objects - drag?
+// TODO: Drag to move objects?
 // TODO: IO to JSON of level
 // TODO: Create and delete objects
 
