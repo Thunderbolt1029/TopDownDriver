@@ -42,12 +42,12 @@ namespace TopDownDriver
                     new Button(() => { Boundary.Centre -= Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
                     new Button(() => { Boundary.Centre += Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
                     
-                    new Button(() => { Boundary.Rotation -= MathHelper.PiOver4  * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Rotation += MathHelper.PiOver4  * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Rotation -= MathHelper.PiOver4  * ModeScale / 45f; Boundary.Rotation = MathHelper.WrapAngle(Boundary.Rotation); UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Rotation += MathHelper.PiOver4  * ModeScale / 45f; Boundary.Rotation = MathHelper.WrapAngle(Boundary.Rotation); UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
 
-                    new Button(() => { Boundary.Size -= Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(15, 75, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size -= Vector2.UnitX * ModeScale; Boundary.Size.X = Math.Max(1, Boundary.Size.X); UpdateVariables(objectType, index); }, new Rectangle(15, 75, 20, 20), Color.Black, "X-", Color.White, Fonts.PropertyEditorUI, 1f),
                     new Button(() => { Boundary.Size += Vector2.UnitX * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(40, 75, 20, 20), Color.Black, "X+", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { Boundary.Size -= Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(70, 75, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { Boundary.Size -= Vector2.UnitY * ModeScale; Boundary.Size.Y = Math.Max(1, Boundary.Size.Y); UpdateVariables(objectType, index); }, new Rectangle(70, 75, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
                     new Button(() => { Boundary.Size += Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(95, 75, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
                     
                 });
@@ -75,8 +75,8 @@ namespace TopDownDriver
                     new Button(() => { SpawnPoint.Centre -= Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(70, 15, 20, 20), Color.Black, "Y-", Color.White, Fonts.PropertyEditorUI, 1f),
                     new Button(() => { SpawnPoint.Centre += Vector2.UnitY * ModeScale; UpdateVariables(objectType, index); }, new Rectangle(95, 15, 20, 20), Color.Black, "Y+", Color.White, Fonts.PropertyEditorUI, 1f),
 
-                    new Button(() => { SpawnPoint.Rotation -= MathHelper.PiOver4 * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
-                    new Button(() => { SpawnPoint.Rotation += MathHelper.PiOver4 * ModeScale / 9f; UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Rotation -= MathHelper.PiOver4 * ModeScale / 45f; SpawnPoint.Rotation = MathHelper.WrapAngle(SpawnPoint.Rotation); UpdateVariables(objectType, index); }, new Rectangle(15, 45, 45, 20), Color.Black, "Anti", Color.White, Fonts.PropertyEditorUI, 1f),
+                    new Button(() => { SpawnPoint.Rotation += MathHelper.PiOver4 * ModeScale / 45f; SpawnPoint.Rotation = MathHelper.WrapAngle(SpawnPoint.Rotation); UpdateVariables(objectType, index); }, new Rectangle(70, 45, 45, 20), Color.Black, "Clock", Color.White, Fonts.PropertyEditorUI, 1f),
                 });
             }
         }
