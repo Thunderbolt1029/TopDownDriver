@@ -1,0 +1,20 @@
+----- DESIGN -----
+
+/- V - TITLE -----------X-\
+| > Section Title         |
+| v Section Title         |
+|  TextButton             |
+|  TextLabel              |
+|  RadioButtons           |
+|  Slider?                |
+|  TextInput              |
+|                         |
+|                         |
+|                         |
+|                         |
+\-------------------------/
+
+- Draggable from top bar
+- X to close the window
+- Drop downable
+- Multiple windows
